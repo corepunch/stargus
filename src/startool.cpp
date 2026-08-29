@@ -51,8 +51,6 @@
 #include "Panel.h"
 #include "Widgets.h"
 #include "DataChunk.h"
-#include "Casc.h"
-#include "Dds.h"
 #include "Logger.h"
 #include "Breeze.h"
 #include "Storage.h"
@@ -562,9 +560,6 @@ int main(int argc, const char **argv)
   printf("Please be patient, the data may take a couple of minutes to extract...\n\n");
   fflush(stdout);
 
-  // set this to false for activating the SC remastered Casc code while development
-  bool mpq = true;
-
   Storage graphics;
   graphics.setDataPath(preferences.getDestDir());
   graphics.setDataType("graphics");
@@ -598,371 +593,333 @@ int main(int argc, const char **argv)
 
   map<string, shared_ptr<AbstractPalette>> paletteMap;
 
-  if (mpq)
+  Control *c = nullptr;
+  unsigned int len = 0;
+  bool case_func = false;
+  shared_ptr<Storm> main_storm;
+  shared_ptr<Storm> sub_storm;
+  shared_ptr<Storm> storm;
+
+  c = CDTodo_bootstrap;
+  len = sizeof(CDTodo_bootstrap) / sizeof(*CDTodo_bootstrap);
+  for (u = 0; u < len; ++u)
   {
-    Control *c = nullptr;
-    unsigned int len = 0;
-    bool case_func = false;
-    shared_ptr<Storm> main_storm;
-    shared_ptr<Storm> sub_storm;
-    shared_ptr<Storm> storm;
-
-    c = CDTodo_bootstrap;
-    len = sizeof(CDTodo_bootstrap) / sizeof(*CDTodo_bootstrap);
-    for (u = 0; u < len; ++u)
+    switch (c[u].Type)
     {
-      switch (c[u].Type)
+    case F:
+    {
+      string archiveFile = preferences.getArchiveDir() + "/" + c[u].ArcFile;
+      case_func = FileExists(archiveFile);
+      cout << "F: " << c[u].ArcFile << " : " << c[u].File << " : " << case_func << endl;
+      if (case_func && !main_storm)
       {
-      case F:
-      {
-        string archiveFile = preferences.getArchiveDir() + "/" + c[u].ArcFile;
-        case_func = FileExists(archiveFile);
-        cout << "F: " << c[u].ArcFile << " : " << c[u].File << " : " << case_func << endl;
-        if (case_func && !main_storm)
-        {
-          main_storm = make_shared<Storm>(archiveFile);
-        }
+        main_storm = make_shared<Storm>(archiveFile);
       }
+    }
+    break;
+    case Q:
+    {
+      cout << "Q:" <<  c[u].ArcFile << " : " << c[u].File <<  endl;
+      if (main_storm)
+      {
+        string file = preferences.getDestDir() + "/" + c[u].File;
+        main_storm->extractFile(c[u].ArcFile, file, false);
+      }
+    }
+    break;
+    default:
       break;
-      case Q:
-      {
-        cout << "Q:" <<  c[u].ArcFile << " : " << c[u].File <<  endl;
-        if (main_storm)
-        {
-          string file = preferences.getDestDir() + "/" + c[u].File;
-          main_storm->extractFile(c[u].ArcFile, file, false);
-        }
-      }
-      break;
-      default:
-        break;
-      }
     }
-
-    c = Todo_bootstrap;
-    len = sizeof(Todo_bootstrap) / sizeof(*Todo_bootstrap);
-    for (u = 0; u < len; ++u)
-    {
-      switch (c[u].Type)
-      {
-      case F:
-      {
-        string archiveFile = preferences.getDestDir() + "/" + c[u].ArcFile;
-        case_func = FileExists(archiveFile);
-        cout << "F: " << c[u].ArcFile << " : " << c[u].File << " : " << case_func << endl;
-        if (case_func && !sub_storm)
-        {
-          sub_storm = make_shared<Storm>(archiveFile);
-        }
-      }
-      break;
-      default:
-        break;
-      }
-    }
-
-    dat::DataHub datahub(sub_storm);
-
-    // read in the json file
-    std::ifstream json_file(pacman::searchFile("dataset/units.json"));
-
-    json units_json; //create unitiialized json object
-
-    json_file >> units_json; // initialize json object with what was read from file
-
-    //std::cout << units_json << std::endl; // prints json object to screen
-
-    vector<string> unitNames;
-    for(auto &array : units_json)
-    {
-      string unit_name = array.at("name");
-      unitNames.push_back(unit_name);
-    }
-
-    loadPalettes(sub_storm, palStorage, paletteMap);
-
-#ifdef HAVE_FFMPEG
-    if (preferences.getVideoExtraction())
-    {
-      PortraitsConverter portraitsConverter(sub_storm, datahub);
-      portraitsConverter.convert();
-    }
-#endif
-
-    dat::UnitsConverter unitsConverter(sub_storm, datahub);
-    unitsConverter.convert(units_json);
-
-    ImagesConverter imagesConverter(sub_storm, datahub);
-    imagesConverter.convert(paletteMap);
-
-    if(preferences.getSoundExtraction())
-    {
-      SfxConverter sfxConverter(sub_storm, datahub);
-      sfxConverter.convert();
-    }
-
-    // read in the json file
-    std::ifstream dlgsRaceJsonStream(pacman::searchFile("dataset/dlgs_race.json"));
-    json dlgsRaceJson; //create unitiialized json object
-    dlgsRaceJsonStream >> dlgsRaceJson; // initialize json object with what was read from file
-
-    Widgets widgets(sub_storm);
-    widgets.setPalette(paletteMap["tunit"]);
-    widgets.convert("dlgs\\terran.grp", graphics("ui/terran"), dlgsRaceJson);
-    widgets.convert("dlgs\\zerg.grp", graphics("ui/zerg"), dlgsRaceJson);
-    widgets.convert("dlgs\\protoss.grp", graphics("ui/protoss"), dlgsRaceJson);
-
-    for (i = 0; i <= 1; ++i)
-    {
-      switch (i)
-      {
-      case 0:
-        // StarDat.mpq or stardat.mpq from inside files\\stardat.mpq
-        c = Todo;
-        len = sizeof(Todo) / sizeof(*Todo);
-        storm = sub_storm;
-        break;
-      case 1:
-        // CD install.exe renamed to StarCraft.mpq or other main mpq file
-        c = CDTodo;
-        len = sizeof(CDTodo) / sizeof(*CDTodo);
-        storm = main_storm;
-        break;
-      }
-
-      case_func = false;
-      for (u = 0; u < len; ++u)
-      {
-        switch (c[u].Type)
-        {
-        case M: // WORKS!
-        {
-          printf("ConvertMap: %s, %s", c[u].File, c[u].ArcFile);
-          Scm scm(storm);
-          case_func = scm.convert(c[u].ArcFile, unitNames, data(c[u].File));
-          printf("...%s\n", case_func ? "ok" : "nok");
-        }
-        break;
-        case T: // WORKS!
-        {
-          printf("ConvertTileset: %s, %s", c[u].File, c[u].ArcFile);
-          tileset::TilesetHub terrain(storm, c[u].ArcFile);
-          case_func = terrain.convert(paletteMap.at(c[u].File), tilesets(c[u].File));
-
-          string luafile(string("tilesets/") + c[u].File + ".lua");
-          string pngfile(string("tilesets/") + c[u].File + "/" + c[u].File + ".png");
-          terrain.generateLua(c[u].File, pngfile, luagen(luafile));
-
-          printf("...%s\n", case_func ? "ok" : "nok");
-        }
-        break;
-        case G: // WORKS!
-        {
-          printf("ConvertGfx: %s, %s, %d", c[u].File, c[u].ArcFile, c[u].Arg1);
-          Grp grp(storm, c[u].ArcFile);
-          std::shared_ptr<AbstractPalette> pal;
-
-          if (c[u].Arg1 == 6)
-          {
-            pal = paletteMap.at("twire");
-            grp.setPalette(pal);
-          }
-          else if (c[u].Arg1 == 5)
-          {
-            pal = paletteMap.at("ticon-0");
-            grp.setPalette(pal);
-          }
-          else if (c[u].Arg1 == 4)
-          {
-            pal = paletteMap.at("ticon-0");
-            grp.setPalette(pal);
-            grp.setRGBA(true);
-          }
-          else if (c[u].Arg1 == 3)
-          {
-            pal = paletteMap.at("ofire");
-            grp.setPalette(pal);
-            grp.setRGBA(true);
-          }
-          else if (c[u].Arg1 == 2)
-          {
-            pal = paletteMap.at("tselect-0");
-            grp.setPalette(pal);
-          }
-          else if (c[u].Arg1 == 1)
-          {
-            pal = paletteMap.begin()->second;
-            grp.setPalette(pal);
-          }
-          else // default palette
-          {
-            pal = paletteMap.begin()->second;
-            grp.setPalette(pal);
-          }
-
-          case_func = grp.save(graphics(string(c[u].File) + ".png"));
-          printf("...%s\n", case_func ? "ok" : "nok");
-        }
-        break;
-        /*case I: // WORKS!
-        {
-          printf("ConvertWidgets: %s, %s", c[u].File, c[u].ArcFile);
-          Widgets widgets(storm);
-          std::shared_ptr<AbstractPalette> pal = paletteMap.at("tunit");
-          widgets.setPalette(pal);
-          case_func = widgets.convert(c[u].ArcFile, c[u].File);
-          printf("...%s\n", case_func ? "ok" : "nok");
-        }*/
-        break;
-        case N: // WORKS!
-        {
-          printf("ConvertFont: %s, %s", c[u].File, c[u].ArcFile);
-          Font font(storm);
-          std::shared_ptr<AbstractPalette> pal = paletteMap.at("tfontgam");
-          font.setPalette(pal);
-          case_func = font.convert(c[u].ArcFile, fonts(string(c[u].File) + ".png"));
-          printf("...%s\n", case_func ? "ok" : "nok");
-        }
-        break;
-        case W: // WORKS!
-          if (preferences.getSoundExtraction())
-          {
-            printf("ConvertWav: %s, %s", c[u].File, c[u].ArcFile);
-            Wav wav(storm);
-            case_func = wav.convert(c[u].ArcFile, sounds(c[u].File));
-            printf("...%s\n", case_func ? "ok" : "nok");
-          }
-          break;
-        case V: // WORKS!
-#ifdef HAVE_FFMPEG
-          if (preferences.getVideoExtraction())
-          {
-            printf("ConvertSmacker: %s, %s", c[u].File, c[u].ArcFile);
-            Smacker video(storm);
-            case_func = video.convertOGV(c[u].ArcFile, videos(c[u].File));
-            printf("...%s\n", case_func ? "ok" : "nok");
-          }
-#endif
-          break;
-        case P: // WORKS!
-#ifdef HAVE_FFMPEG
-          if (preferences.getVideoExtraction())
-          {
-            printf("ConvertPortrait: %s, %s", c[u].File, c[u].ArcFile);
-            Smacker video(storm);
-            case_func = video.convertMNG(c[u].ArcFile, videos(c[u].File));
-            printf("...%s\n", case_func ? "ok" : "nok");
-          }
-#endif
-          break;
-        case H: // WORKS!
-        {
-          printf("ConvertPcx: %s, %s", c[u].File, c[u].ArcFile);
-          Pcx pcx(storm, c[u].ArcFile);
-          case_func = pcx.savePNG(graphics(string(c[u].File) + ".png"));
-          printf("...%s\n", case_func ? "ok" : "nok");
-        }
-        break;
-        case E: // WORKS
-        {
-          printf("Extract text: %s, %s", c[u].File, c[u].ArcFile);
-          auto chunk = storm->extractDataChunk(c[u].ArcFile);
-          char *utf8 = iconvISO2UTF8(reinterpret_cast<char*>(chunk->getDataPointer()));
-          if (utf8) {
-            chunk->replaceData(reinterpret_cast<unsigned char*>(utf8), strlen(utf8), 0);
-            free(utf8);
-            case_func = chunk->write(data(c[u].File).getFullPath());
-          } else {
-            case_func = false;
-          }
-          printf("...%s\n", case_func ? "ok" : "nok");
-        }
-        break;
-        case L:
-        {
-          printf("ConvertCampaign (.chk): %s, %s", c[u].File, c[u].ArcFile);
-          Chk chk(storm);
-          chk.setUnitNames(unitNames);
-          case_func = chk.convert(c[u].ArcFile, data(c[u].File));
-          printf("...%s\n", case_func ? "ok" : "nok");
-        }
-        break;
-        default:
-          break;
-        }
-      }
-    }
-
-    UIConsole uic(sub_storm);
-
-    // Terran console
-    string console = "ui/tconsole";
-    //pixel count from left
-    int left = 275;
-    int right = 296;
-
-    printf("UIConsole: %s", console.c_str());
-    uic.convert(graphics(console), left, right);
-    printf("...%s\n", case_func ? "ok" : "nok");
-
-    // Zerg console
-    console = "ui/zconsole";
-    left = 274;
-    right = 281;
-
-    printf("UIConsole: %s", console.c_str());
-    uic.convert(graphics(console), left, right);
-    printf("...%s\n", case_func ? "ok" : "nok");
-
-    // Protoss console
-    console = "ui/pconsole";
-    left = 227;
-    right = 265;
-
-    printf("UIConsole: %s", console.c_str());
-    uic.convert(graphics(console), left, right);
-    printf("...%s\n", case_func ? "ok" : "nok");
-
-    // remove temporary sub files
-    platform::unlink(sub_storm->getArchiveName());
-
-    CreatePanels();
   }
-  else // Casc
-  {
-#ifdef HAVE_CASC_tmp
-    unsigned int len = sizeof(RMTodo) / sizeof(*RMTodo);
-    shared_ptr<Casc> hurricane = make_shared<Casc>("/home/andreas/BigSpace/Games/StarCraft");
-    preferences.setDestDir("data.Stargus.RM");
-    Control *c = RMTodo;
 
-    bool case_func = false;
+  c = Todo_bootstrap;
+  len = sizeof(Todo_bootstrap) / sizeof(*Todo_bootstrap);
+  for (u = 0; u < len; ++u)
+  {
+    switch (c[u].Type)
+    {
+    case F:
+    {
+      string archiveFile = preferences.getDestDir() + "/" + c[u].ArcFile;
+      case_func = FileExists(archiveFile);
+      cout << "F: " << c[u].ArcFile << " : " << c[u].File << " : " << case_func << endl;
+      if (case_func && !sub_storm)
+      {
+        sub_storm = make_shared<Storm>(archiveFile);
+      }
+    }
+    break;
+    default:
+      break;
+    }
+  }
+
+  dat::DataHub datahub(sub_storm);
+
+  // read in the json file
+  std::ifstream json_file(pacman::searchFile("dataset/units.json"));
+
+  json units_json; //create unitiialized json object
+
+  json_file >> units_json; // initialize json object with what was read from file
+
+  //std::cout << units_json << std::endl; // prints json object to screen
+
+  vector<string> unitNames;
+  for(auto &array : units_json)
+  {
+    string unit_name = array.at("name");
+    unitNames.push_back(unit_name);
+  }
+
+  loadPalettes(sub_storm, palStorage, paletteMap);
+
+#ifdef HAVE_FFMPEG
+  if (preferences.getVideoExtraction())
+  {
+    PortraitsConverter portraitsConverter(sub_storm, datahub);
+    portraitsConverter.convert();
+  }
+#endif
+
+  dat::UnitsConverter unitsConverter(sub_storm, datahub);
+  unitsConverter.convert(units_json);
+
+  ImagesConverter imagesConverter(sub_storm, datahub);
+  imagesConverter.convert(paletteMap);
+
+  if(preferences.getSoundExtraction())
+  {
+    SfxConverter sfxConverter(sub_storm, datahub);
+    sfxConverter.convert();
+  }
+
+  // read in the json file
+  std::ifstream dlgsRaceJsonStream(pacman::searchFile("dataset/dlgs_race.json"));
+  json dlgsRaceJson; //create unitiialized json object
+  dlgsRaceJsonStream >> dlgsRaceJson; // initialize json object with what was read from file
+
+  Widgets widgets(sub_storm);
+  widgets.setPalette(paletteMap["tunit"]);
+  widgets.convert("dlgs\\terran.grp", graphics("ui/terran"), dlgsRaceJson);
+  widgets.convert("dlgs\\zerg.grp", graphics("ui/zerg"), dlgsRaceJson);
+  widgets.convert("dlgs\\protoss.grp", graphics("ui/protoss"), dlgsRaceJson);
+
+  for (i = 0; i <= 1; ++i)
+  {
+    switch (i)
+    {
+    case 0:
+      // StarDat.mpq or stardat.mpq from inside files\\stardat.mpq
+      c = Todo;
+      len = sizeof(Todo) / sizeof(*Todo);
+      storm = sub_storm;
+      break;
+    case 1:
+      // CD install.exe renamed to StarCraft.mpq or other main mpq file
+      c = CDTodo;
+      len = sizeof(CDTodo) / sizeof(*CDTodo);
+      storm = main_storm;
+      break;
+    }
+
+    case_func = false;
     for (u = 0; u < len; ++u)
     {
       switch (c[u].Type)
       {
-      case D: // WORKS
+      case M: // WORKS!
       {
-        printf("ConvertDds: %s, %s, %s", mpqfile.c_str(), c[u].File, c[u].ArcFile);
-
-        Dds dds(hurricane);
-        case_func = dds.convert(c[1].ArcFile, c[1].File);
+        printf("ConvertMap: %s, %s", c[u].File, c[u].ArcFile);
+        Scm scm(storm);
+        case_func = scm.convert(c[u].ArcFile, unitNames, data(c[u].File));
         printf("...%s\n", case_func ? "ok" : "nok");
       }
+      break;
+      case T: // WORKS!
+      {
+        printf("ConvertTileset: %s, %s", c[u].File, c[u].ArcFile);
+        tileset::TilesetHub terrain(storm, c[u].ArcFile);
+        case_func = terrain.convert(paletteMap.at(c[u].File), tilesets(c[u].File));
+
+        string luafile(string("tilesets/") + c[u].File + ".lua");
+        string pngfile(string("tilesets/") + c[u].File + "/" + c[u].File + ".png");
+        terrain.generateLua(c[u].File, pngfile, luagen(luafile));
+
+        printf("...%s\n", case_func ? "ok" : "nok");
+      }
+      break;
+      case G: // WORKS!
+      {
+        printf("ConvertGfx: %s, %s, %d", c[u].File, c[u].ArcFile, c[u].Arg1);
+        Grp grp(storm, c[u].ArcFile);
+        std::shared_ptr<AbstractPalette> pal;
+
+        if (c[u].Arg1 == 6)
+        {
+          pal = paletteMap.at("twire");
+          grp.setPalette(pal);
+        }
+        else if (c[u].Arg1 == 5)
+        {
+          pal = paletteMap.at("ticon-0");
+          grp.setPalette(pal);
+        }
+        else if (c[u].Arg1 == 4)
+        {
+          pal = paletteMap.at("ticon-0");
+          grp.setPalette(pal);
+          grp.setRGBA(true);
+        }
+        else if (c[u].Arg1 == 3)
+        {
+          pal = paletteMap.at("ofire");
+          grp.setPalette(pal);
+          grp.setRGBA(true);
+        }
+        else if (c[u].Arg1 == 2)
+        {
+          pal = paletteMap.at("tselect-0");
+          grp.setPalette(pal);
+        }
+        else if (c[u].Arg1 == 1)
+        {
+          pal = paletteMap.begin()->second;
+          grp.setPalette(pal);
+        }
+        else // default palette
+        {
+          pal = paletteMap.begin()->second;
+          grp.setPalette(pal);
+        }
+
+        case_func = grp.save(graphics(string(c[u].File) + ".png"));
+        printf("...%s\n", case_func ? "ok" : "nok");
+      }
+      break;
+      /*case I: // WORKS!
+      {
+        printf("ConvertWidgets: %s, %s", c[u].File, c[u].ArcFile);
+        Widgets widgets(storm);
+        std::shared_ptr<AbstractPalette> pal = paletteMap.at("tunit");
+        widgets.setPalette(pal);
+        case_func = widgets.convert(c[u].ArcFile, c[u].File);
+        printf("...%s\n", case_func ? "ok" : "nok");
+      }*/
       break;
       case N: // WORKS!
       {
-        printf("ConvertFont: %s, %s, %s", mpqfile.c_str(), c[u].File, c[u].ArcFile);
-
-        Font font(hurricane);
-        case_func = font.convert(c[u].ArcFile, c[u].File);
+        printf("ConvertFont: %s, %s", c[u].File, c[u].ArcFile);
+        Font font(storm);
+        std::shared_ptr<AbstractPalette> pal = paletteMap.at("tfontgam");
+        font.setPalette(pal);
+        case_func = font.convert(c[u].ArcFile, fonts(string(c[u].File) + ".png"));
         printf("...%s\n", case_func ? "ok" : "nok");
       }
       break;
+      case W: // WORKS!
+        if (preferences.getSoundExtraction())
+        {
+          printf("ConvertWav: %s, %s", c[u].File, c[u].ArcFile);
+          Wav wav(storm);
+          case_func = wav.convert(c[u].ArcFile, sounds(c[u].File));
+          printf("...%s\n", case_func ? "ok" : "nok");
+        }
+        break;
+      case V: // WORKS!
+#ifdef HAVE_FFMPEG
+        if (preferences.getVideoExtraction())
+        {
+          printf("ConvertSmacker: %s, %s", c[u].File, c[u].ArcFile);
+          Smacker video(storm);
+          case_func = video.convertOGV(c[u].ArcFile, videos(c[u].File));
+          printf("...%s\n", case_func ? "ok" : "nok");
+        }
+#endif
+        break;
+      case P: // WORKS!
+#ifdef HAVE_FFMPEG
+        if (preferences.getVideoExtraction())
+        {
+          printf("ConvertPortrait: %s, %s", c[u].File, c[u].ArcFile);
+          Smacker video(storm);
+          case_func = video.convertMNG(c[u].ArcFile, videos(c[u].File));
+          printf("...%s\n", case_func ? "ok" : "nok");
+        }
+#endif
+        break;
+      case H: // WORKS!
+      {
+        printf("ConvertPcx: %s, %s", c[u].File, c[u].ArcFile);
+        Pcx pcx(storm, c[u].ArcFile);
+        case_func = pcx.savePNG(graphics(string(c[u].File) + ".png"));
+        printf("...%s\n", case_func ? "ok" : "nok");
+      }
+      break;
+      case E: // WORKS
+      {
+        printf("Extract text: %s, %s", c[u].File, c[u].ArcFile);
+        auto chunk = storm->extractDataChunk(c[u].ArcFile);
+        char *utf8 = iconvISO2UTF8(reinterpret_cast<char*>(chunk->getDataPointer()));
+        if (utf8) {
+          chunk->replaceData(reinterpret_cast<unsigned char*>(utf8), strlen(utf8), 0);
+          free(utf8);
+          case_func = chunk->write(data(c[u].File).getFullPath());
+        } else {
+          case_func = false;
+        }
+        printf("...%s\n", case_func ? "ok" : "nok");
+      }
+      break;
+      case L:
+      {
+        printf("ConvertCampaign (.chk): %s, %s", c[u].File, c[u].ArcFile);
+        Chk chk(storm);
+        chk.setUnitNames(unitNames);
+        case_func = chk.convert(c[u].ArcFile, data(c[u].File));
+        printf("...%s\n", case_func ? "ok" : "nok");
+      }
+      break;
+      default:
+        break;
       }
     }
-#endif /* HAVE_CASC */
   }
+
+  UIConsole uic(sub_storm);
+
+  // Terran console
+  string console = "ui/tconsole";
+  //pixel count from left
+  int left = 275;
+  int right = 296;
+
+  printf("UIConsole: %s", console.c_str());
+  uic.convert(graphics(console), left, right);
+  printf("...%s\n", case_func ? "ok" : "nok");
+
+  // Zerg console
+  console = "ui/zconsole";
+  left = 274;
+  right = 281;
+
+  printf("UIConsole: %s", console.c_str());
+  uic.convert(graphics(console), left, right);
+  printf("...%s\n", case_func ? "ok" : "nok");
+
+  // Protoss console
+  console = "ui/pconsole";
+  left = 227;
+  right = 265;
+
+  printf("UIConsole: %s", console.c_str());
+  uic.convert(graphics(console), left, right);
+  printf("...%s\n", case_func ? "ok" : "nok");
+
+  // remove temporary sub files
+  platform::unlink(sub_storm->getArchiveName());
+
+  CreatePanels();
 
   sprintf(buf, "%s/extracted", preferences.getDestDir().c_str());
   f = fopen(buf, "w");
@@ -973,4 +930,3 @@ int main(int argc, const char **argv)
 
   return 0;
 }
-

@@ -122,7 +122,6 @@ enum _archive_type_
   V,    // SMK Video                     (name,video)
   L,    // Campaign Levels
   Q,    // MPQ archive
-  D,    // Graphics in DDS format
   P,    // SMK Portraits
   PAL,  // Palette from pcx file
   WPE   // Palette from wpe file
