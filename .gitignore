@@ -7,3 +7,4 @@ stargus
 **/.DS_Store
 campaigns
 */clangd/**
+data/
