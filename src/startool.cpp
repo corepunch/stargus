@@ -600,6 +600,19 @@ int main(int argc, const char **argv)
   shared_ptr<Storm> sub_storm;
   shared_ptr<Storm> storm;
 
+  // Prefer standalone MPQs when they are present. A directory containing
+  // both starcraft.mpq and stardat.mpq is not necessarily a CD installer;
+  // trying to extract files\stardat.mpq from starcraft.mpq can create a
+  // corrupt intermediate archive.
+  const char *standalone_names[] = {"stardat.mpq", "StarDat.mpq", "STARDAT.MPQ"};
+  for (const char *name : standalone_names) {
+    string archiveFile = preferences.getArchiveDir() + "/" + name;
+    if (FileExists(archiveFile)) {
+      sub_storm = make_shared<Storm>(archiveFile);
+      break;
+    }
+  }
+
   c = CDTodo_bootstrap;
   len = sizeof(CDTodo_bootstrap) / sizeof(*CDTodo_bootstrap);
   for (u = 0; u < len; ++u)
@@ -620,7 +633,7 @@ int main(int argc, const char **argv)
     case Q:
     {
       cout << "Q:" <<  c[u].ArcFile << " : " << c[u].File <<  endl;
-      if (main_storm)
+      if (main_storm && !sub_storm)
       {
         string file = preferences.getDestDir() + "/" + c[u].File;
         main_storm->extractFile(c[u].ArcFile, file, false);
@@ -654,6 +667,22 @@ int main(int argc, const char **argv)
     }
   }
 
+  unsigned char *units_data = nullptr;
+  size_t units_size = 0;
+  if (!sub_storm || !sub_storm->extractMemory("arr\\units.dat", &units_data, &units_size))
+  {
+    cerr << "The StarCraft data archive does not contain arr\\units.dat." << endl;
+    free(units_data);
+    return 1;
+  }
+  free(units_data);
+  if (units_size != 19192 && units_size != 19876)
+  {
+    cerr << "Unsupported StarCraft data format: arr\\units.dat is " << units_size
+         << " bytes; Stargus requires retail StarCraft or Brood War data." << endl;
+    return 1;
+  }
+
   dat::DataHub datahub(sub_storm);
 
   // read in the json file
@@ -674,12 +703,17 @@ int main(int argc, const char **argv)
 
   loadPalettes(sub_storm, palStorage, paletteMap);
 
-#ifdef HAVE_FFMPEG
+#if defined(HAVE_FFMPEG)
   if (preferences.getVideoExtraction())
   {
     PortraitsConverter portraitsConverter(sub_storm, datahub);
     portraitsConverter.convert();
   }
+#else
+  // Generate the portrait Lua tables even when optional video conversion is
+  // unavailable. The engine accepts empty tables and can still run normally.
+  PortraitsConverter portraitsConverter(sub_storm, datahub);
+  portraitsConverter.convert();
 #endif
 
   dat::UnitsConverter unitsConverter(sub_storm, datahub);

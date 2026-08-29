@@ -49,22 +49,22 @@ static std::string FindStratagusBinary(const char *argv0)
 	fs::path launcher_path(argv0);
 	if (launcher_path.has_parent_path()) {
 		fs::path sibling = launcher_path.parent_path() / binary_name;
-		if (fs::exists(sibling)) {
+		if (fs::is_regular_file(sibling)) {
 			return sibling.string();
 		}
 		fs::path make_build = launcher_path.parent_path() / "stratagus" / "build-make" / "bin" / binary_name;
-		if (fs::exists(make_build)) {
+		if (fs::is_regular_file(make_build)) {
 			return make_build.string();
 		}
 	}
 
 	fs::path cwd_candidate = fs::current_path() / binary_name;
-	if (fs::exists(cwd_candidate)) {
+	if (fs::is_regular_file(cwd_candidate)) {
 		return cwd_candidate.string();
 	}
 
 	fs::path make_build = fs::current_path() / "stratagus" / "build-make" / "bin" / binary_name;
-	if (fs::exists(make_build)) {
+	if (fs::is_regular_file(make_build)) {
 		return make_build.string();
 	}
 
