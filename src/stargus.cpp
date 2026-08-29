@@ -28,9 +28,11 @@ namespace fs = std::filesystem;
 
 static void PrintUsage(const char *argv0)
 {
-	std::cout << "Usage: " << argv0 << " [-data=/path/to/data] [stratagus args...]\n"
+	std::cout << "Usage: " << argv0 << " [-data=/path/to/data] [-map=path/to/map] [stratagus args...]\n"
 	          << "  -data=PATH  Path to the Stargus data directory.\n"
-	          << "              Defaults to ./data/ if omitted.\n";
+	          << "              Defaults to ./data/ if omitted.\n"
+	          << "  -map=PATH   Start directly on the specified map.\n"
+	          << "              Without it, start at the main menu.\n";
 }
 
 static bool StartsWith(const char *value, const char *prefix)
@@ -71,16 +73,17 @@ static std::string FindStratagusBinary(const char *argv0)
 	return binary_name;
 }
 
-static int LaunchStratagus(const std::string &binary, const std::string &data_dir, int argc, char *argv[])
+static int LaunchStratagus(const std::string &binary, const std::string &data_dir,
+	const std::vector<std::string> &forwarded_args)
 {
 	std::vector<std::string> args;
-	args.reserve(static_cast<size_t>(argc) + 3);
+	args.reserve(forwarded_args.size() + 3);
 	args.emplace_back(binary);
 	args.emplace_back("-d");
 	args.emplace_back(data_dir);
 
-	for (int i = 0; i < argc; ++i) {
-		args.emplace_back(argv[i]);
+	for (const std::string &arg : forwarded_args) {
+		args.emplace_back(arg);
 	}
 
 	std::vector<char *> cargs;
@@ -123,7 +126,7 @@ static int LaunchStratagus(const std::string &binary, const std::string &data_di
 int main(int argc, char *argv[])
 {
 	std::string data_dir = "data/";
-	std::vector<char *> stratagus_args;
+	std::vector<std::string> stratagus_args;
 	stratagus_args.reserve(static_cast<size_t>(argc));
 
 	for (int i = 1; i < argc; ++i) {
@@ -141,11 +144,22 @@ int main(int argc, char *argv[])
 			PrintUsage(argv[0]);
 			return 0;
 		}
-		stratagus_args.push_back(argv[i]);
+		if (StartsWith(arg, "-map=")) {
+			const char *map = arg + 5;
+			if (*map == '\0') {
+				std::cerr << "Error: -map= requires a map path\n\n";
+				PrintUsage(argv[0]);
+				return 1;
+			}
+			// Stratagus loads a map supplied as its positional argument.
+			stratagus_args.emplace_back(map);
+			continue;
+		}
+		stratagus_args.emplace_back(arg);
 	}
 
 	const std::string stratagus_binary = FindStratagusBinary(argv[0]);
-	const int ret = LaunchStratagus(stratagus_binary, data_dir, static_cast<int>(stratagus_args.size()), stratagus_args.data());
+	const int ret = LaunchStratagus(stratagus_binary, data_dir, stratagus_args);
 	if (ret == ENOENT) {
 		std::cerr << "Failed to launch Stratagus: " << stratagus_binary << "\n";
 		return 1;

@@ -16,5 +16,5 @@ preferences = {
   TipNumber = 0,
   ShowTips = true,
   GrabMouse = false,
-  RapidStratagusIDE = true
+  RapidStratagusIDE = false
 }
