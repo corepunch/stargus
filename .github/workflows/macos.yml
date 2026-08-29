@@ -50,7 +50,7 @@ jobs:
         path: stratagus
 
     - name: Install dependencies
-      run: brew install dylibbundler sdl2 sdl2_mixer sdl2_image lua ffmpeg stormlib libpng zlib
+      run: brew install dylibbundler sdl2 sdl2_mixer lua stormlib libpng zlib
 
     - name: cmake --version
       run: cmake --version
