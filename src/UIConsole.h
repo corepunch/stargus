@@ -33,8 +33,6 @@ public:
 
   bool convert(Storage pngfile, int left, int right);
 
-private:
-  bool callConvert(const std::string &cmd);
 };
 
 #endif /* UICONSOLE_H */

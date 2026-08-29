@@ -40,29 +40,29 @@
 --
 
 local playlist = {
-  "music/title.ogg"
+  "music/title.wav"
 }
 
 function SetMusic(music)
   if (music == "menu") then
-    playlist = {"music/title.ogg"}
+    playlist = {"music/title.wav"}
   elseif (music == "terran") then
     playlist = {
-      "music/terran/1.ogg",
-      "music/terran/2.ogg",
-      "music/terran/3.ogg"
+      "music/terran/1.wav",
+      "music/terran/2.wav",
+      "music/terran/3.wav"
     }
   elseif (music == "zerg") then
     playlist = {
-      "music/zerg/1.ogg",
-      "music/zerg/2.ogg",
-      "music/zerg/3.ogg"
+      "music/zerg/1.wav",
+      "music/zerg/2.wav",
+      "music/zerg/3.wav"
     }
   elseif (music == "protoss") then
     playlist = {
-      "music/protoss/1.ogg",
-      "music/protoss/2.ogg",
-      "music/protoss/3.ogg"
+      "music/protoss/1.wav",
+      "music/protoss/2.wav",
+      "music/protoss/3.wav"
     }
   end
   MusicStopped()
@@ -75,14 +75,14 @@ function MusicStopped()
 end
 
 -- SetCdMode("off")
-MakeSound("building-placed", "terran/building place.ogg")
-MakeSound("button", "ui/button.ogg")
-MakeSound("buzz", "ui/buzz.ogg")
+MakeSound("building-placed", "terran/building place.wav")
+MakeSound("button", "ui/button.wav")
+MakeSound("buzz", "ui/buzz.wav")
 
 -- Explosions
 
-MakeSound("explosion-large", "misc/explolrg.ogg")
-MakeSound("explosion-medium", "misc/explomed.ogg")
+MakeSound("explosion-large", "misc/explolrg.wav")
+MakeSound("explosion-medium", "misc/explomed.wav")
 
 
 Load("scripts/terran/sound.lua")
@@ -110,12 +110,12 @@ DefineGameSounds(
 --  "transport-docking",
 --  "building-construction",
 
---  "work-complete", {"terran", MakeSound("basic terran voices work complete", "terran/units/scv/upd00.ogg")},
---  "work-complete", {"orc", MakeSound("basic orc voices work complete", "orc/basic_voices/work_complete.ogg")},
+--  "work-complete", {"terran", MakeSound("basic terran voices work complete", "terran/units/scv/upd00.wav")},
+--  "work-complete", {"orc", MakeSound("basic orc voices work complete", "orc/basic_voices/work_complete.wav")},
 
---  "rescue", {"terran", MakeSound("terran rescue", "terran/rescue.ogg")},
---  "rescue", {"orc", MakeSound("orc rescue", "orc/rescue.ogg")}
+--  "rescue", {"terran", MakeSound("terran rescue", "terran/rescue.wav")},
+--  "rescue", {"orc", MakeSound("orc rescue", "orc/rescue.wav")}
 )
 
---MakeSound("highclick", "ui/highclick.ogg")
---MakeSound("statsthump", "ui/statsthump.ogg")
+--MakeSound("highclick", "ui/highclick.wav")
+--MakeSound("statsthump", "ui/statsthump.wav")

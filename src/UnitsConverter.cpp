@@ -353,7 +353,7 @@ std::string UnitsConverter::makeReadySounds(Unit &unit)
     string sound_file_base(unit_ready_sound);
     replaceString("\\", "/", sound_file_base);
     sound_file_base = cutFileEnding(to_lower(sound_file_base), ".wav");
-    string sound_file_ogg = "sounds/unit/" + sound_file_base + ".ogg";
+    string sound_file_ogg = "sounds/unit/" + sound_file_base + ".wav";
 
     make_sound = lg::function("MakeSound", {lg::quote(unit_sound_ready_id), lg::table({lg::quote(sound_file_ogg)})});
   }
@@ -389,7 +389,7 @@ std::string UnitsConverter::makeWhatSounds(Unit &unit)
         string sound_file_base(unit_what_sound);
         replaceString("\\", "/", sound_file_base);
         sound_file_base = cutFileEnding(to_lower(sound_file_base), ".wav");
-        string sound_file_ogg = "sounds/unit/" + sound_file_base + ".ogg";
+        string sound_file_ogg = "sounds/unit/" + sound_file_base + ".wav";
 
         what_sound_vec.push_back(sound_file_ogg);
       }
@@ -431,7 +431,7 @@ std::string UnitsConverter::makeYesSounds(Unit &unit)
         string sound_file_base(unit_yes_sound);
         replaceString("\\", "/", sound_file_base);
         sound_file_base = cutFileEnding(to_lower(sound_file_base), ".wav");
-        string sound_file_ogg = "sounds/unit/" + sound_file_base + ".ogg";
+        string sound_file_ogg = "sounds/unit/" + sound_file_base + ".wav";
 
         yes_sound_vec.push_back(sound_file_ogg);
       }
@@ -473,7 +473,7 @@ std::string UnitsConverter::makePissSounds(Unit &unit)
         string sound_file_base(unit_piss_sound);
         replaceString("\\", "/", sound_file_base);
         sound_file_base = cutFileEnding(to_lower(sound_file_base), ".wav");
-        string sound_file_ogg = "sounds/unit/" + sound_file_base + ".ogg";
+        string sound_file_ogg = "sounds/unit/" + sound_file_base + ".wav";
 
         piss_sound_vec.push_back(sound_file_ogg);
       }
