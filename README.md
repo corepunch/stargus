@@ -21,10 +21,8 @@ stargus and stratagus version must match. Stratagus is provided as a git submodu
 ### Prerequisites (macOS)
 
 ```
-brew install make stormlib libpng zlib
+brew install make stormlib sdl2 libpng zlib
 ```
-
-Or, if building the Stratagus engine too, see its own build instructions.
 
 ### Build Stargus
 
@@ -34,11 +32,15 @@ make
 ./stargus
 ```
 
-This produces `startool` (data extractor) and `stargus` (launcher) with no
-meson/cmake/ffmpeg/ImageMagick dependency. Variables you may override:
+This produces `startool` (data extractor), `stargus` (launcher), and
+`build/bin/stratagus` (engine) with no meson/cmake/ffmpeg/ImageMagick or
+SDL2_mixer dependency. Lua 5.1 and tolua++ are built from the Stratagus
+third-party submodule. Audio uses the SDL2 API directly and supports the WAV
+assets used by Stargus. Useful individual targets are `third-party`, `lua`,
+`tolua++`, and `engine`. Variables you may override:
 
 - `PREFIX` - install prefix used for runtime data/scripts paths (default `/usr/local`)
-- `CXX`, `CXXFLAGS`, `PKG_CONFIG`, `STORM_PREFIX`
+- `CC`, `CFLAGS`, `CXX`, `CXXFLAGS`, `AR`, `PKG_CONFIG`, `STORM_PREFIX`
 
 ![image](https://cloud.githubusercontent.com/assets/46235/11292960/499a7d3c-8f55-11e5-9356-62c190c57467.png)
 ![image](https://cloud.githubusercontent.com/assets/46235/11292993/9198675c-8f55-11e5-9f74-2f23fb207498.png)

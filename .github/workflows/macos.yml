@@ -42,29 +42,11 @@ jobs:
         submodules: recursive
         path: stargus
 
-    - name: Checkout Stratagus
-      uses: actions/checkout@v6
-      with: 
-        repository: Wargus/stratagus
-        submodules: recursive
-        path: stratagus
-
     - name: Install dependencies
-      run: brew install dylibbundler sdl2 sdl2_mixer lua stormlib libpng zlib
-
-    - name: cmake --version
-      run: cmake --version
+      run: brew install dylibbundler sdl2 stormlib libpng zlib
 
     - name: Build Stratagus
-      run: |
-        cmake stratagus -B stratagus/build \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_FIND_FRAMEWORK=LAST \
-        -DBUILD_VENDORED_LUA=ON \
-        -DBUILD_VENDORED_SDL=OFF \
-        -DBUILD_VENDORED_MEDIA_LIBS=OFF \
-        -DBUILD_TESTING=1
-        cmake --build stratagus/build
+      run: make -C stargus engine
 
     - name: Build Stargus
       run: |
@@ -72,7 +54,7 @@ jobs:
 
     - name: Create app bundle
       run: |
-        export STRATAGUS=stratagus/build/stratagus
+        export STRATAGUS=stargus/build/bin/stratagus
         stargus/mac/bundle.sh
         
         dylibbundler -of -cd -b -x stargus/mac/Stargus.app/Contents/MacOS/stratagus -d stargus/mac/Stargus.app/Contents/libs/
