@@ -53,28 +53,26 @@ endif
 
 LIBS := $(STORM_LIBS) $(PNG_LIBS) $(ZLIB_LIBS) $(ICONV_LIBS)
 
-all: startool stargus
+all: startool stargus engine
 
 # Compile the extraction tool + library objects.
 $(OBJDIR)/%.o: %.cpp build/config.h
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
 
-# Launcher: needs the Stratagus game-launcher header and path macros.
+# Launcher: a tiny wrapper that only forwards -data= and the remaining args.
 $(STARGUS_OBJ): src/stargus.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -Istratagus/gameheaders \
-		-DDATA_PATH='"$(PREFIX)/share/games/stratagus/stargus"' \
-		-DSCRIPTS_PATH='"$(PREFIX)/share/games/stratagus/stargus"' \
-		-DSTRATAGUS_BIN='"stratagus"' \
-		-DSOURCE_DIR='"$(CURDIR)"' \
-		-c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 startool: $(STARTOOL_OBJ) $(LIB_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 
 stargus: $(STARGUS_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^
+
+engine:
+	$(MAKE) -C $(STRATAGUS_DIR)
 
 build/config.h:
 	@mkdir -p build
@@ -85,4 +83,4 @@ build/config.h:
 clean:
 	rm -rf build startool stargus
 
-.PHONY: all clean
+.PHONY: all clean engine
