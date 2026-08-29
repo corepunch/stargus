@@ -31,6 +31,7 @@ Smacker::~Smacker()
 
 bool Smacker::convertOGV(const std::string &arcfile,  Storage storage)
 {
+#ifdef HAVE_FFMPEG
   bool result = true;
 
   string smk_file = storage.getFullPath() + ".smk";
@@ -57,10 +58,16 @@ bool Smacker::convertOGV(const std::string &arcfile,  Storage storage)
   }
 
   return result;
+#else
+  (void)arcfile;
+  (void)storage;
+  return false;
+#endif
 }
 
 bool Smacker::convertMNG(const std::string &arcfile,  Storage storage)
 {
+#ifdef HAVE_FFMPEG
   bool result = true;
 
   string smk_file = storage.getFullPath() + ".smk";
@@ -98,10 +105,16 @@ bool Smacker::convertMNG(const std::string &arcfile,  Storage storage)
   }
 
   return result;
+#else
+  (void)arcfile;
+  (void)storage;
+  return false;
+#endif
 }
 
 bool Smacker::callConvert(const std::string &cmd)
 {
+#ifdef HAVE_FFMPEG
   bool result = true;
 
   // try convert with ImageMagick 7+
@@ -125,4 +138,8 @@ bool Smacker::callConvert(const std::string &cmd)
   }
 
   return result;
+#else
+  (void)cmd;
+  return false;
+#endif
 }

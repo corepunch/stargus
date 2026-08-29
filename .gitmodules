@@ -1,0 +1,3 @@
+[submodule "stratagus"]
+	path = stratagus
+	url = https://github.com/corepunch/stratagus.git

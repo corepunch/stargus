@@ -16,15 +16,29 @@ your Starcraft installation to extract the data to work with Stargus.
 ## Build Instructions
 
 NOTE: stratagus ( https://github.com/Wargus/stratagus ) is required.
-stargus and stratagus version must match
+stargus and stratagus version must match. Stratagus is provided as a git submodule.
+
+### Prerequisites (macOS)
 
 ```
-meson build
-ninja -C build
+brew install make stormlib libpng zlib
+```
+
+Or, if building the Stratagus engine too, see its own build instructions.
+
+### Build Stargus
+
+```
+git submodule update --init
+make
 ./stargus
 ```
 
-Please take a look into meson_options.txt for possible build options. Special -DSTRATAGUS_INCLUDE_DIR and -DSTRATAGUS_BIN.
+This produces `startool` (data extractor) and `stargus` (launcher) with no
+meson/cmake/ffmpeg/ImageMagick dependency. Variables you may override:
+
+- `PREFIX` - install prefix used for runtime data/scripts paths (default `/usr/local`)
+- `CXX`, `CXXFLAGS`, `PKG_CONFIG`, `STORM_PREFIX`
 
 ![image](https://cloud.githubusercontent.com/assets/46235/11292960/499a7d3c-8f55-11e5-9356-62c190c57467.png)
 ![image](https://cloud.githubusercontent.com/assets/46235/11292993/9198675c-8f55-11e5-9f74-2f23fb207498.png)

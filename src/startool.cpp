@@ -681,11 +681,13 @@ int main(int argc, const char **argv)
 
     loadPalettes(sub_storm, palStorage, paletteMap);
 
+#ifdef HAVE_FFMPEG
     if (preferences.getVideoExtraction())
     {
       PortraitsConverter portraitsConverter(sub_storm, datahub);
       portraitsConverter.convert();
     }
+#endif
 
     dat::UnitsConverter unitsConverter(sub_storm, datahub);
     unitsConverter.convert(units_json);
@@ -832,6 +834,7 @@ int main(int argc, const char **argv)
           }
           break;
         case V: // WORKS!
+#ifdef HAVE_FFMPEG
           if (preferences.getVideoExtraction())
           {
             printf("ConvertSmacker: %s, %s", c[u].File, c[u].ArcFile);
@@ -839,8 +842,10 @@ int main(int argc, const char **argv)
             case_func = video.convertOGV(c[u].ArcFile, videos(c[u].File));
             printf("...%s\n", case_func ? "ok" : "nok");
           }
+#endif
           break;
         case P: // WORKS!
+#ifdef HAVE_FFMPEG
           if (preferences.getVideoExtraction())
           {
             printf("ConvertPortrait: %s, %s", c[u].File, c[u].ArcFile);
@@ -848,6 +853,7 @@ int main(int argc, const char **argv)
             case_func = video.convertMNG(c[u].ArcFile, videos(c[u].File));
             printf("...%s\n", case_func ? "ok" : "nok");
           }
+#endif
           break;
         case H: // WORKS!
         {

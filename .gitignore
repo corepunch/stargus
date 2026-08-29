@@ -1,6 +1,8 @@
 #Ignore Visual Studio project files
 build/
 build_linux/
+startool
+stargus
 .vscode/*
 **/.DS_Store
 campaigns

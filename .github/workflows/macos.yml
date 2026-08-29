@@ -50,7 +50,7 @@ jobs:
         path: stratagus
 
     - name: Install dependencies
-      run: brew install dylibbundler imagemagick sdl2 sdl2_mixer sdl2_image lua ffmpeg meson
+      run: brew install dylibbundler sdl2 sdl2_mixer sdl2_image lua ffmpeg stormlib libpng zlib
 
     - name: cmake --version
       run: cmake --version
@@ -68,12 +68,7 @@ jobs:
 
     - name: Build Stargus
       run: |
-        meson setup stargus \
-        --buildtype=release \
-        -DSTRATAGUS_INCLUDE_DIR=../../stratagus/gameheaders \
-        -DSTRATAGUS_BIN=../../stratagus/build/stratagus \
-        stargus/build
-        ninja -C stargus/build
+        make -C stargus
 
     - name: Create app bundle
       run: |
