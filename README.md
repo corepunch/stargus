@@ -15,29 +15,58 @@ your Starcraft installation to extract the data to work with Stargus.
 
 ## Build Instructions
 
-NOTE: stratagus ( https://github.com/Wargus/stratagus ) is required.
-stargus and stratagus version must match. Stratagus is provided as a git submodule.
+Stratagus is pinned as a submodule, so the game and engine are built together
+from matching revisions.
 
 ### Prerequisites (macOS)
 
 ```
-brew install make stormlib sdl2 libpng zlib
+brew install pkg-config stormlib sdl2 libpng zlib
 ```
 
-### Build Stargus
+You also need a C++17 compiler and GNU Make. Xcode Command Line Tools provide
+both on macOS.
+
+On Linux, install the equivalent development packages for StormLib, SDL2,
+libpng, and zlib, together with a C++17 compiler, Make, and pkg-config.
+
+### Build Stargus and Stratagus
 
 ```
-git submodule update --init
+git clone --recurse-submodules https://github.com/corepunch/stargus.git
+cd stargus
 make
-./stargus
 ```
 
-This produces `startool` (data extractor), `stargus` (launcher), and
-`build/bin/stratagus` (engine) with no meson/cmake/ffmpeg/ImageMagick or
-SDL2_mixer dependency. Lua 5.1 and tolua++ are built from the Stratagus
-third-party submodule. Audio uses the SDL2 API directly and supports the WAV
-assets used by Stargus. Useful individual targets are `third-party`, `lua`,
-`tolua++`, and `engine`. Variables you may override:
+For an existing checkout, initialize or refresh all nested submodules before
+building:
+
+```
+git submodule update --init --recursive
+make
+```
+
+The build produces:
+
+- `startool` — StarCraft data extractor
+- `stargus` — game launcher
+- `build/bin/stratagus` — Stratagus engine
+
+Lua 5.1, tolua++, and Guisan are built from the pinned Stratagus third-party
+sources. Audio is handled directly through SDL2 and supports Stargus's WAV
+assets.
+
+Individual build targets are available when you do not need the complete game:
+
+```
+make third-party  # initialize nested engine dependencies
+make lua          # build Lua 5.1
+make tolua++      # build the generator and runtime
+make engine       # build build/bin/stratagus
+```
+
+Run `./stargus` after extracting or selecting a StarCraft installation through
+the launcher. Build variables you may override:
 
 - `PREFIX` - install prefix used for runtime data/scripts paths (default `/usr/local`)
 - `CC`, `CFLAGS`, `CXX`, `CXXFLAGS`, `AR`, `PKG_CONFIG`, `STORM_PREFIX`
